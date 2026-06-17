@@ -26,39 +26,91 @@ FastAPI Backend
 ## Repo structure
 
 ```
-icpe/
-├── backend/          # FastAPI · Python 3.11
+interagency-child-protection-mvp/
+├── README.md                     # Інструкції, як запустити, пітч notes
+├── docker-compose.yml            # Для локального запуску (optional)
+├── .env.example                  # API keys (OpenAI, Supabase)
+│
+├── frontend-kid/                 # Дитячий додаток (React + Vite)
+│   ├── public/
+│   │   └── avatar-monster.svg    # Аватар (можна генерувати)
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── AvatarChat.tsx
+│   │   │   ├── MoodSwiper.tsx
+│   │   │   ├── LogInput.tsx
+│   │   │   └── MonsterFeedback.tsx
+│   │   ├── pages/
+│   │   │   └── Home.tsx
+│   │   ├── services/
+│   │   │   └── api.ts            # calls to backend
+│   │   ├── utils/
+│   │   │   ├── anonymizer.ts
+│   │   │   └── moodMapper.ts
+│   │   ├── types/
+│   │   │   └── log.ts            # TypeScript interfaces
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   └── tailwind.config.js
+│
+├── frontend-dashboard/           # Дашборд для фахівців
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── RiskTimeline.tsx
+│   │   │   ├── AlertsPanel.tsx
+│   │   │   ├── ChildProfile.tsx
+│   │   │   ├── RegistryFusion.tsx
+│   │   │   └── CaseNotes.tsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.tsx
+│   │   │   └── CaseView.tsx
+│   │   ├── services/
+│   │   │   └── api.ts
+│   │   ├── store/                # Zustand / Redux
+│   │   ├── types/
+│   │   └── App.tsx
+│   ├── package.json
+│   └── tailwind.config.js
+│
+├── backend/                      # Основний бекенд (рекомендую Python FastAPI)
 │   ├── app/
-│   │   ├── api/      # route handlers
-│   │   ├── core/     # config, security, logging
-│   │   ├── models/   # SQLAlchemy ORM
-│   │   ├── schemas/  # Pydantic I/O schemas
-│   │   └── services/ # business logic (pipeline, scorer, presidio)
+│   │   ├── main.py
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   └── security.py       # JWT + role-based
+│   │   ├── api/
+│   │   │   ├── v1/
+│   │   │   │   ├── endpoints/
+│   │   │   │   │   ├── logs.py
+│   │   │   │   │   └── dashboard.py
+│   │   │   │   └── router.py
+│   │   ├── services/
+│   │   │   ├── openai_service.py # System Prompt + JSON mode
+│   │   │   ├── risk_engine.py    # Mapping + scoring
+│   │   │   ├── anonymizer.py     # Presidio wrapper
+│   │   │   └── registry_mock.py  # Synthetic data
+│   │   ├── models/
+│   │   │   └── schemas.py        # Pydantic models (JSON Schema)
+│   │   ├── db/
+│   │   │   ├── session.py
+│   │   │   └── models.py         # SQLAlchemy
+│   │   └── utils/
+│   │       └── prompts.py        # Повний System Prompt
 │   ├── tests/
-│   ├── Dockerfile
-│   └── requirements.txt
-├── infra/
-│   └── docker-compose.yml
+│   ├── requirements.txt
+│   └── alembic/                  # Migrations (optional)
+│
+├── shared/                       # Спільні типи та constants
+│   └── types/
+│       ├── risk.ts
+│       └── clinical_mapping.json # 7 питань + ваги
+│
 ├── docs/
 │   ├── architecture.md
-│   └── data-model.md
-└── .github/
-    └── workflows/ci.yml
+│   ├── clinical_evidence.md      # RCADS, PHQ-9 mapping
+│   └── pitch_deck.md
+│
+└── scripts/
+    └── seed_fake_data.py         # Для демо
 ```
-
-> **Frontends live in separate repos** linked as git submodules (or sibling dirs):
-> `icpe-child-app/` (React) · `icpe-dashboard/` (React)
-
-## Quick start
-
-```bash
-cp backend/.env.example backend/.env   # add OPENAI_API_KEY
-cd infra && docker compose up --build
-# API: http://localhost:8000
-# Docs: http://localhost:8000/docs
-```
-
-## Privacy model
-
-All child text is de-identified via Microsoft Presidio **before** any AI call.
-The AI model receives only anonymous vectors — never names, IDs, or raw speech.
