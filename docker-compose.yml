@@ -1,0 +1,86 @@
+version: '3.9'
+
+services:
+  # ==================== BACKEND ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: child-protection-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - ENVIRONMENT=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ==================== DATABASE ====================
+  postgres:
+    image: postgres:16-alpine
+    container_name: child-protection-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: child_protection
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # ==================== FRONTEND - CHILD APP ====================
+  frontend-kid:
+    build:
+      context: ./frontend-kid
+      dockerfile: Dockerfile
+    container_name: child-protection-kid-app
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend-kid:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # ==================== FRONTEND - DASHBOARD ====================
+  frontend-dashboard:
+    build:
+      context: ./frontend-dashboard
+      dockerfile: Dockerfile
+    container_name: child-protection-dashboard
+    ports:
+      - "3001:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend-dashboard:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  # ==================== (Опціонально) Adminer для БД ====================
+  adminer:
+    image: adminer:latest
+    container_name: child-protection-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: child-protection-network
