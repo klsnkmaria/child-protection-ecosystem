@@ -1,0 +1,21 @@
+/* frontend-kid/src/App.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', system_ui, sans-serif;
+}
+
+textarea {
+  scrollbar-width: thin;
+}
+
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: rgba(255,255,255,0.3);
+  border-radius: 20px;
+}
